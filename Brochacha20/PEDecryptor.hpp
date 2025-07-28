@@ -7,8 +7,8 @@
 // Demo func
 void DecryptPage(uint32_t PageRVA)
 {
-	PEFile* Client = new PEFile(L"RobloxPlayerBeta.exe");  // C:\\Users\\Mark\\AppData\\Local\\Fishstrap\\Versions\\version-225e87fdb7254f64
-	PEFile* Loader = new PEFile(L"RobloxPlayerBeta.dll"); // C:\\Users\\Mark\\AppData\\Local\\Fishstrap\\niggerdontdelete\\
+	PEFile* Client = new PEFile(L"RobloxPlayerBeta.exe");
+	PEFile* Loader = new PEFile(L"RobloxPlayerBeta.dll");
 
 	uc_engine* uc;
 	PageDecryptorCore::DumpedRegisters Registers;
@@ -48,8 +48,8 @@ void DecryptPage(uint32_t PageRVA)
 // Demo func
 void DecryptAllPages()
 {
-	PEFile* Client = new PEFile(L"C:\\Users\\Mark\\AppData\\Local\\Fishstrap\\Versions\\version-225e87fdb7254f64\\RobloxPlayerBeta.exe");  // C:\\Users\\Mark\\AppData\\Local\\Fishstrap\\Versions\\version-225e87fdb7254f64
-	PEFile* Loader = new PEFile(L"C:\\Users\\Mark\\AppData\\Local\\Fishstrap\\Versions\\version-225e87fdb7254f64\\RobloxPlayerBeta.dll"); // C:\\Users\\Mark\\AppData\\Local\\Fishstrap\\niggerdontdelete\\
+	PEFile* Client = new PEFile(L"C:\\Users\\Mark\\AppData\\Local\\Fishstrap\\Versions\\version-225e87fdb7254f64\\RobloxPlayerBeta.exe"); 
+	PEFile* Loader = new PEFile(L"C:\\Users\\Mark\\AppData\\Local\\Fishstrap\\Versions\\version-225e87fdb7254f64\\RobloxPlayerBeta.dll");
 
 	uc_engine* uc;
 	PageDecryptorCore::DumpedRegisters Registers;
