@@ -20,3 +20,57 @@ A fully static Roblox Client Decryptor
 4. Place it into Brochacha20\libs\unicorn\lib\unicorn.lib
 5. Build as Release/Debug using Visual Studio
 6. Enjoy
+
+# How Does it Work?
+
+```
+Brief Explanation about Hyperion's Runtime Page decryption
+
+Offsets:
+
+DecryptionKeyArray Inside RobloxPlayerBeta.dll
+
+
+Operations:
+
+Part1:
+
+PageRVA = (ExceptionAddress & 0xFFFFFFFFFFFFF000uLL) - RobloxClientBase
+PageId  = PageRVA >> 12
+DecryptionKeyOffset = (PageId % 0x2004) * 32
+DecryptionKey1 = *(uint128_t*)(DecryptionKeyArray + DecryptionKeyOffset)
+DecryptionKey2 = *(uint128_t*)(DecryptionKeyArray + DecryptionKeyOffset + 16)
+
+Part2:
+
+PageDecryptionBlockKeysBase # Gathered from Allocator function
+PageRVA = (ExceptionAddress & 0xFFFFFFFFFFFFF000uLL) - RobloxClientBase
+PageDecryptionKeyBlockOffset = 344 * (PageRVA >> 12) (OR 344 * PageId)
+CurrentPageKeyBlock = PageDecryptionBlockKeysBase + PageDecryptionKeyBlockOffset
+PageDecryKey1 = *(uint8_t*)(CurrentPageKeyBlock + 158)
+
+v2853 = *(BYTE *)(CurrentPageKeyBlock + 197) ^ __ROL1__(*(BYTE *)(CurrentPageKeyBlock + 4 * PageDecryKey1 + 174),2);
+v2854 = *(BYTE *)(CurrentPageKeyBlock + 198) ^ __ROL1__(*(BYTE *)(CurrentPageKeyBlock + 4 * PageDecryKey1 + 175),2);
+v2855 = *(BYTE *)(CurrentPageKeyBlock + 199) ^ __ROL1__(*(BYTE *)(CurrentPageKeyBlock + 4 * PageDecryKey1 + 176),2);
+v2856 = *(BYTE *)(CurrentPageKeyBlock + 200) ^ __ROL1__(*(BYTE *)(CurrentPageKeyBlock + 4 * PageDecryKey1 + 177),2);
+
+OffsetKey1 = (v2856 << 24) | (v2855 << 16) | (v2854 << 8) | v2853;
+OffsetKey2 = ((((DWORD)-RobloxPlayerExeBase + ExceptionAddress & 0x7FFF000) >> 12) & 0x7FFF) << 44 (OR PageRVA << 32 :3)
+
+OffsetKey = OffsetKey1 + OffsetKey2
+NOffsetKey = ~OffsetKey
+
+All that above me is what Roblox internally does to compute the OffsetKey.
+At the end the OffsetKey is just PageRVA shifted by 32 bits.
+
+Decryption:
+
+So we require for the Hyperion's ChaCha20 decryption the following values:
+
+    OffsetKey
+    NOffsetKey
+    DecryptionKey1
+    DecryptionKey2
+
+They will be fed to the ChaCha20 decryption function to start the decryption process
+```
