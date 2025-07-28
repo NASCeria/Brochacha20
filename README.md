@@ -10,7 +10,7 @@ A fully static Roblox Client Decryptor
 4. Enjoy ^^
 
 # Options
--s,-silent   : No logging
+-s,-silent   : No logging\n
 -o,--output  : Decrypted output
 
 # How to Build
