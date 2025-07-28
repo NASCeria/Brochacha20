@@ -13,6 +13,10 @@ A fully static Roblox Client Decryptor
 -s,-silent   : No logging   
 -o,--output  : Decrypted output
 
+# Issues
+When an issue occurs, you can open an Issue report on Github providing your Console Log and the Roblox Version you tried to Decrypt (via hash like version-225e87fdb7254f64)
+WHEN it's very important and you REALLY need it to work you can also contact me via discord: @mrnasec
+
 # How to Build
 1. Download Repo
 2. Open solution with Visual Studio
@@ -74,3 +78,6 @@ So we require for the Hyperion's ChaCha20 decryption the following values:
 
 They will be fed to the ChaCha20 decryption function to start the decryption process
 ```
+
+# Contact
+discord: @mrnasec
