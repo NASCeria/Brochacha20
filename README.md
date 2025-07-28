@@ -1,8 +1,7 @@
 # Brochacha20
 A fully static Roblox Client Decryptor
 
-<img width="1208" height="278" alt="image" src="https://github.com/user-attachments/assets/0658637c-c584-450b-883f-b4dc4eb784fd" />
-
+<img width="1276" height="277" alt="image" src="https://github.com/user-attachments/assets/08157872-79f6-4e89-aaab-6be0ecfe9e6c" />
 
 # How to Use
 1. Download newest Build from Release Tab
