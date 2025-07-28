@@ -344,7 +344,7 @@ namespace PageDecryptorCore
 
 		// Debugging
 		//uc_hook mem_hook;
-		//uc_hook_add(uc, &mem_hook, UC_HOOK_MEM_READ | UC_HOOK_MEM_WRITE, hook_mem, (void*)"nigger", EMULATION_DECRYPTION_BASE_DATA_ADDRESS, EMULATION_DECRYPTION_BASE_DATA_ADDRESS + 0x1000);
+		//uc_hook_add(uc, &mem_hook, UC_HOOK_MEM_READ | UC_HOOK_MEM_WRITE, hook_mem, (void*)"MEOW", EMULATION_DECRYPTION_BASE_DATA_ADDRESS, EMULATION_DECRYPTION_BASE_DATA_ADDRESS + 0x1000);
 
 		uintptr_t RIP;
 		uc_reg_read(uc, UC_X86_REG_RIP, &RIP);

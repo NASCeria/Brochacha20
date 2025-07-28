@@ -13,9 +13,9 @@
 
 // alr so 					Result.Data = inst.operands[1].mem.base;
 // 					break;
-// NIGGER CAN THIS AI STOP
+// MEOW CAN THIS AI STOP
 
-// alr so im a nigger and dont want to paste some randomass pe dumper so i thought ill just write one rq
+// alr so im a meow and dont want to paste some randomass pe dumper so i thought ill just write one rq
 
 #pragma once
 
