@@ -28,7 +28,7 @@ WHEN It's very important and you REALLY need it to work you can also contact me 
 # How Does it Work?
 
 ```
-Brief Explanation about Hyperion's Runtime Page decryption
+Brief Explanation about Hyperion's Runtime Page decryption (FULLY ANALYZED BY NASEC)
 
 Offsets:
 
