@@ -14,7 +14,7 @@ A fully static Roblox Client Decryptor
 -o,--output  : Decrypted output
 
 # Issues
-When an issue occurs, you can open an Issue report on Github providing your Console Log and the Roblox Version you tried to Decrypt (via hash like version-225e87fdb7254f64)
+When an Issue occurs, you can open an Issue report on Github providing your Console Log and the Roblox Version you tried to Decrypt (via hash like version-225e87fdb7254f64)
 WHEN it's very important and you REALLY need it to work you can also contact me via discord: @mrnasec
 
 # How to Build
