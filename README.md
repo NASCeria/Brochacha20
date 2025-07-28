@@ -21,7 +21,7 @@ WHEN it's very important and you REALLY need it to work you can also contact me 
 1. Download Repo
 2. Open solution with Visual Studio
 3. Get a compiled version of the UnicornEmu library
-4. Place it into Brochacha20\libs\unicorn\lib\unicorn.lib
+4. Place the .lib into Brochacha20\libs\unicorn\lib\unicorn.lib
 5. Build as Release/Debug using Visual Studio
 6. Enjoy
 
