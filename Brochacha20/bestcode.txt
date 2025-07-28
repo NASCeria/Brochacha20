@@ -1,0 +1,372 @@
+// Hello dear Explorer!! This is my badly organised code which reflects my poor Cpp/C skills!
+// Overall the logic is what matters! checkout my great reversal!
+
+// TODO: maybe cleanup this bullshit and create more structs instead of passing 5 parameters to every second function
+
+#include <windows.h>
+#include <iostream>
+
+#include "PeFile.hpp"
+#include "Emulation.hpp"
+
+constexpr uint64_t EMULATION_DECRYPTION_BASE_DATA_ADDRESS = 0x20000000;
+
+namespace PageDecryptorCore
+{
+	namespace Calculations
+	{
+		// Maybe make it a macro? (A typical PageRVA looks like this: 0x0111B000)
+		uint32_t GetPageId(uintptr_t PageRVA)
+		{
+			return PageRVA >> 12;
+		}
+
+		// Appears to be useless..? The pageblock always has zeroes at those locations even when fully allocated
+		uint64_t CalculateOffsetKey(uint64_t PageRVA, uintptr_t KeyBlock)
+		{
+			/*
+			uint8_t PageDecryKey1 = *(uint8_t*)(KeyBlock + 158);
+
+			uint8_t v2853 = *(BYTE*)(KeyBlock + 197) ^ __ROL1__(*(BYTE*)(KeyBlock + 4 * PageDecryKey1 + 174), 2);
+			uint8_t v2854 = *(BYTE*)(KeyBlock + 198) ^ __ROL1__(*(BYTE*)(KeyBlock + 4 * PageDecryKey1 + 175), 2);
+			uint8_t v2855 = *(BYTE*)(KeyBlock + 199) ^ __ROL1__(*(BYTE*)(KeyBlock + 4 * PageDecryKey1 + 176), 2);
+			uint8_t v2856 = *(BYTE*)(KeyBlock + 200) ^ __ROL1__(*(BYTE*)(KeyBlock + 4 * PageDecryKey1 + 177), 2);
+
+			uint64_t OffsetKey1 = (v2856 << 24) | (v2855 << 16) | (v2854 << 8) | v2853;
+			uint64_t OffsetKey2 = PageRVA << 32;
+			
+			return OffsetKey1 + OffsetKey2;
+			*/
+
+			return PageRVA << 32;
+		}
+
+
+		// A typical PageId looks like this: 111B
+		void GetDecryptionKeys(uint32_t PageId, uintptr_t DecryptionKeyArray, __uint128 Keys[2])
+		{
+			uint64_t DecryptionKeyOffset = (PageId % 0x2004) * 32;
+			__uint128 DecryptionKey1 = *(__uint128*)(DecryptionKeyArray + DecryptionKeyOffset);
+			__uint128 DecryptionKey2 = *(__uint128*)(DecryptionKeyArray + DecryptionKeyOffset + 16);
+
+			Keys[0] = DecryptionKey1;
+			Keys[1] = DecryptionKey2;
+		}
+	}
+
+	// When first 2 bytes match RBP then the last 2 bytes are the displacement
+	// Register: DumpedRegister & 0xFFFF
+	// Displacement: DumpedRegister >> 16
+	struct DumpedRegisters
+	{
+		DWORD PageRVA;
+		DWORD PageRVA2; // Extension for PageRVA when PageRVA is on the stack
+		DWORD DecryptionKey1;
+		DWORD DecryptionKey2;
+		DWORD Data;
+		DWORD OffsetKey1;
+		DWORD OffsetKey2;
+	};
+
+	uc_context* BuildContext(uc_engine* uc,DumpedRegisters* Registers, char* Data, __uint128 DecryptionKey1, __uint128 DecryptionKey2,uintptr_t PageRVA)
+	{
+		uc_context* context;
+		uc_context_alloc(uc, &context);
+		uc_context_save(uc,context);
+
+		Emulation::ClearEssentialRegisters(context);
+
+		uc_context_reg_write(context, Emulation::ZydisReg2Uc((ZydisRegister_)Registers->DecryptionKey1), &DecryptionKey1);
+		uc_context_reg_write(context, Emulation::ZydisReg2Uc((ZydisRegister_)Registers->DecryptionKey2), &DecryptionKey2);
+		uc_context_reg_write(context, Emulation::ZydisReg2Uc((ZydisRegister_)Registers->Data), &EMULATION_DECRYPTION_BASE_DATA_ADDRESS);
+		if ((Registers->PageRVA & 0x0000FFFF) == ZYDIS_REGISTER_RBP)
+		{
+			// TODO: Write this mf
+			// rbp + disp = pagerva
+			//throw std::runtime_error("Not implemented yet, PageRVA is on the stack");
+
+			uint16_t disp = Registers->PageRVA >> 16; // Extract the displacement
+
+			uintptr_t rbp;
+			uc_context_reg_read(context, Emulation::ZydisReg2Uc(ZYDIS_REGISTER_RBP), &rbp);
+			uc_mem_write(uc, rbp + disp, &PageRVA, 8);
+			
+			uc_context_reg_write(context, ZydisReg2Uc((ZydisRegister_)Registers->PageRVA2), &PageRVA);
+		}
+		else
+		{
+			uc_context_reg_write(context, Emulation::ZydisReg2Uc((ZydisRegister_)Registers->PageRVA), &PageRVA);
+		}
+		uintptr_t offsetKey1 = PageRVA << 32;
+		uc_context_reg_write(context, Emulation::ZydisReg2Uc((ZydisRegister_)Registers->OffsetKey1), &offsetKey1);
+
+		return context;
+	}
+
+	void DumpRegisters(uintptr_t StartRange,uintptr_t DecryptionKeyOffsetInst,DumpedRegisters& Result)
+	{
+		Zydis::ZydisDecodedFullInstruction inst = Zydis::Disassmemble(StartRange);
+
+		// We expect the PageRetrieve to be mov PageRVA, [RBP + Displacement] OR A Random ass Instruction!
+		auto pageRetrieve = Zydis::Disassmemble(StartRange - 7); // we need to check if hyperion has a register dedicated to the page or it is on the stack
+
+		std::cout << std::hex << pageRetrieve.offset << " " << Zydis::FormatInstruction(pageRetrieve) << std::endl;
+
+		// Probably stack
+		if (pageRetrieve.operands[1].type == ZYDIS_OPERAND_TYPE_MEMORY && pageRetrieve.operands[1].mem.base == ZYDIS_REGISTER_RBP)
+		{
+			// Stack!
+			Result.PageRVA = (pageRetrieve.operands[1].mem.disp.value << 16) | ZYDIS_REGISTER_RBP;
+			Result.PageRVA2 = inst.operands[1].mem.base;
+		}
+		else
+		{
+			Result.PageRVA = inst.operands[1].mem.base;
+		}
+
+		// DecryptionKey1 and DecryptionKey2
+		
+		auto DecryptionKeyOffsetInstDis = Zydis::Disassmemble(DecryptionKeyOffsetInst);
+		auto StoreDecryptionKey1Inst = Zydis::Disassmemble(DecryptionKeyOffsetInstDis.offset + DecryptionKeyOffsetInstDis.inst.length);
+		auto StoreDecryptionKey2Inst = Zydis::Disassmemble(StoreDecryptionKey1Inst.offset + StoreDecryptionKey1Inst.inst.length);
+
+		// Maybe we should check for the fourth operand which is the displacement for the second key? key2 will ALWAYS have the displacement of 10h cuz xmm regs are 16bytes and key is 32bytes
+		// 2 DAYS LATER.. those checks seem to be dumb due to roblox shuffling the regs between everything! 
+		if (StoreDecryptionKey1Inst.operands[0].reg.value != ZYDIS_REGISTER_XMM5 && StoreDecryptionKey1Inst.operands[0].reg.value != ZYDIS_REGISTER_XMM4)
+		{
+			//throw std::runtime_error("Unexpected register when dumping DecryptionKey1");
+		}
+		if (StoreDecryptionKey2Inst.operands[0].reg.value != ZYDIS_REGISTER_XMM5 && StoreDecryptionKey2Inst.operands[0].reg.value != ZYDIS_REGISTER_XMM4)
+		{
+			//throw std::runtime_error("Unexpected register when dumping DecryptionKey2");
+		}
+
+		Result.DecryptionKey1 = StoreDecryptionKey1Inst.operands[0].reg.value;
+		Result.DecryptionKey2 = StoreDecryptionKey2Inst.operands[0].reg.value;
+
+		inst = Zydis::Disassmemble(StartRange);
+		while (true)
+		{
+			if (inst.inst.mnemonic == ZYDIS_MNEMONIC_LEA && inst.operands[1].type == ZYDIS_OPERAND_TYPE_MEMORY && inst.operands[1].mem.disp.value == 0x10)
+			{
+				Result.Data = inst.operands[1].mem.base;
+				break;
+			}
+			inst = Zydis::Disassmemble(inst.offset + inst.inst.length);
+		}
+
+		inst = Zydis::Disassmemble(StartRange);
+		while (true)
+		{
+			if (inst.inst.mnemonic == ZYDIS_MNEMONIC_MOV && inst.operands[0].type == ZYDIS_OPERAND_TYPE_REGISTER && inst.operands[1].type == ZYDIS_OPERAND_TYPE_REGISTER)
+			{
+				uint8_t possibleOffsetKey1 = inst.operands[1].reg.value;
+				inst = Zydis::Disassmemble(inst.offset + inst.inst.length);
+				if (inst.inst.mnemonic == ZYDIS_MNEMONIC_NOT && inst.operands[0].type == ZYDIS_OPERAND_TYPE_REGISTER)
+				{
+					Result.OffsetKey1 = possibleOffsetKey1;
+					break;
+				}
+			}
+			inst = Zydis::Disassmemble(inst.offset + inst.inst.length);
+		}
+	}
+
+	// first: instruction offset second: decryptionKeys in memory
+	// Start can be any address that isnt behind where it acceses the decryption keys (start range as example would work)
+	std::pair<uintptr_t, uintptr_t> FetchDecryptionKeyOffset(PEFile* Pe,uintptr_t Start)
+	{
+		uintptr_t imulInst = Pe->ScanPattern(Start, "01 F8 3F 00", true, 1).back() - 3; // search for the 3FF801h operand which is used to calculate the decryption key offset
+
+		Zydis::ZydisDecodedFullInstruction inst = Zydis::Disassmemble(imulInst);
+		while (true)
+		{
+			inst = Zydis::Disassmemble(inst.offset + inst.inst.length);
+			if (inst.inst.mnemonic == ZYDIS_MNEMONIC_LEA && inst.operands[1].type == ZYDIS_OPERAND_TYPE_MEMORY && inst.operands[1].mem.base == ZYDIS_REGISTER_RIP)
+			{
+				return std::make_pair(inst.offset, inst.offset + inst.inst.length + inst.operands[1].mem.disp.value);
+			}
+		}
+
+		throw std::runtime_error("Failed to find decryption key offset");
+	}
+
+	std::pair<uintptr_t, uintptr_t> FetchEmulationRange(PEFile* Pe)
+	{
+		uintptr_t s = Pe->ScanSection(".byfron", "66 0F 6F ?? 66 0F 73 ?? 20 66 0F 6F ?? 66 0F 73 ?? 20 66 44 0F 6F ?? 66 41 0F 73 D0 20 66 44 0F 6F ?? 66 41 0F 73 D1 20")[0];
+		uintptr_t pageSubInst = Pe->ScanPattern(s,"00 F0 FF FF", true,1).back() - 3; // search for the -1000h
+		
+
+		Zydis::ZydisDecodedFullInstruction inst = Zydis::Disassmemble(pageSubInst);
+		while (true)
+		{
+			inst = Zydis::Disassmemble(inst.offset + inst.inst.length);
+			if (inst.inst.mnemonic == ZYDIS_MNEMONIC_JMP)
+			{
+				return std::make_pair(pageSubInst, inst.offset + inst.operands[0].imm.value.u + inst.inst.length);
+			}
+		}
+
+		throw std::runtime_error("Failed to find range");
+	}
+
+	uc_engine* SetupEmulation()
+	{
+		uc_engine* uc = Emulation::SetupEmulation();
+		//uc_mem_map(uc, 0x4206900, Pe->GetSize(), UC_PROT_ALL);
+		//uc_mem_write(uc, 0x4206900, Pe->GetBase(), Pe->GetSize());
+		return uc;
+	}
+
+	/*
+		void PrepareDecryptionEmulation(uc_engine* uc,uintptr_t Start, uintptr_t End,DumpedRegisters* Registers,char* Data, uintptr_t PageRVA, __uint128 DecryptionKey1, __uint128 DecryptionKey2)
+	{
+		uc_context* context = BuildContext(uc, Registers, Data, DecryptionKey1, DecryptionKey2, PageRVA);
+		uc_context_restore(uc, context);
+
+		uc_mem_map(uc, Start, End - Start, UC_PROT_ALL);
+		uc_mem_write(uc, Start, (const void*)Start, End - Start);
+	}
+	*/
+
+	// Uhhhh unicornemu is niggershit and wants us to rather map the whole ass dll instead of this HOT solutiuon :c
+	/*
+	void MapDecryptionPrologue(uc_engine* uc,uintptr_t Start, uintptr_t End)
+	{
+		uc_err err = uc_reg_write(uc, UC_X86_REG_RIP, &code_start);
+		if(err != UC_ERR_OK)
+		{
+			throw std::runtime_error("Failed to set RIP register: " + std::string(uc_strerror(err)));
+		}
+
+		err = uc_mem_map(uc, code_start, 0x1000 * 4, UC_PROT_ALL);
+		if (err != UC_ERR_OK)
+		{
+			throw std::runtime_error("Failed to Map code Memory: " + std::string(uc_strerror(err)));
+		}
+
+		err = uc_mem_write(uc, code_start, (const void*)Start, 0x1000 * 4);
+		if (err != UC_ERR_OK)
+		{
+			throw std::runtime_error("Failed to Write code Memory: " + std::string(uc_strerror(err)));
+		}
+	}
+	*/
+
+
+	void PrepareDecryptionEmulation(uc_engine* uc, uintptr_t Start, uintptr_t End, DumpedRegisters* Registers, char* Data, uintptr_t PageRVA, __uint128 DecryptionKey1, __uint128 DecryptionKey2)
+	{
+		uc_context* context = BuildContext(uc, Registers, Data, DecryptionKey1, DecryptionKey2, PageRVA);
+		uc_context_restore(uc, context);
+	}
+
+	void SetupEmulationContext(uc_engine* uc,DumpedRegisters* Registers, char* Data, uintptr_t PageRVA, __uint128 DecryptionKey1, __uint128 DecryptionKey2)
+	{
+		uc_context* context = BuildContext(uc, Registers, Data, DecryptionKey1, DecryptionKey2, PageRVA);
+		uc_context_restore(uc, context);
+
+		DWORD useless;
+		bool sex = VirtualProtect((LPVOID)Data, 0x1000, PAGE_READWRITE, &useless); // When loading the client the memory is set to NO_ACCESS
+		UEMU_CHECK("UC_MEM_WRITE",uc_mem_write(uc, EMULATION_DECRYPTION_BASE_DATA_ADDRESS, Data, 0x1000)); // Write the encrypted page data
+	}
+
+	uc_err StartEmulation(uc_engine* uc)
+	{
+		uintptr_t RIP;
+		uc_reg_read(uc, UC_X86_REG_RIP, &RIP);
+
+		//Emulation::PrintCpuContext(uc);
+
+		uc_err status = uc_emu_start(uc, RIP, RIP + 0x10000, 0, 0);
+		/*
+		uc_err err = UC_ERR_OK;
+		while (err == UC_ERR_OK)
+		{
+			uintptr_t RIP;
+			uc_reg_read(uc, UC_X86_REG_RIP, &RIP);
+
+			//std::cout << std::hex << RIP << " " << Zydis::FormatInstruction(Zydis::Disassmemble(RIP)) << std::endl;
+
+			err = Emulation::StepEmulation(uc);
+		}
+		*/
+		//std::cout << "Emulation finished with error: " << uc_strerror(err) << std::endl;
+		uc_reg_write(uc, UC_X86_REG_RIP, &RIP);
+		return status;
+
+	}
+
+	void InitializeDecryptionEmulation(PEFile* loaderPE,uc_engine** uc, uintptr_t* DecryptionKeyArrayAddy, DumpedRegisters& DumpedRegisters)
+	{
+		auto decryptionRange = FetchEmulationRange(loaderPE);
+		auto DecryptionKeyOffset = PageDecryptorCore::FetchDecryptionKeyOffset(loaderPE, decryptionRange.first);
+		*DecryptionKeyArrayAddy = DecryptionKeyOffset.second;
+		PageDecryptorCore::DumpRegisters(decryptionRange.first, DecryptionKeyOffset.first, DumpedRegisters);
+
+		*uc = SetupEmulation();
+
+		auto code = loaderPE->GetSectionRange(".byfron");
+		
+		UEMU_CHECK("UC_MEM_MAP", uc_mem_map(*uc, code.first, (code.second - code.first) & 0xFFFFFFFFFFFFF000uLL, UC_PROT_ALL));
+		UEMU_CHECK("UC_MEM_WRITE", uc_mem_write(*uc, code.first, (const void*)code.first, (code.second - code.first) & 0xFFFFFFFFFFFFF000uLL));
+		uc_reg_write(*uc, UC_X86_REG_RIP, &decryptionRange.first);
+		uc_mem_write(*uc, decryptionRange.second, "\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC", 8);
+		
+		UEMU_CHECK("UC_MEM_MAP", uc_mem_map(*uc, EMULATION_DECRYPTION_BASE_DATA_ADDRESS, 0x1000, UC_PROT_ALL)); // Map the encrypted page data
+
+		//MapDecryptionPrologue(*uc, decryptionRange.first, decryptionRange.second);
+	}
+
+	void hook_sex(uc_engine* uc, uint64_t addr, uint32_t size, void* user_data)
+	{
+		printf("hook_sex: 0x%" PRIx64 ", 0x%x\n", addr, size);
+		Emulation::PrintCpuContext(uc);
+	}
+	void hook_code(uc_engine* uc, uint64_t addr, uint32_t size, void* user_data)
+	{
+		//printf("hook_sex: 0x%" PRIx64 ", 0x%x\n", addr, size);
+		std::cout << std::hex << addr << " " << Zydis::FormatInstruction(Zydis::Disassmemble(addr)) << std::endl;
+		Emulation::PrintCpuContext(uc);
+	}
+
+	// We expect a already initialized uc_engine and a valid DumpedRegisters
+	void StartDecryptionEmulation(uc_engine* uc, DumpedRegisters* Registers, char* Data, uintptr_t PageRVA, __uint128 DecryptionKey1, __uint128 DecryptionKey2)
+	{
+		SetupEmulationContext(uc, Registers, Data, PageRVA, DecryptionKey1, DecryptionKey2);
+
+		// DEBUGGING
+		//uc_hook uc_hook;
+		//uc_hook_add(uc,&uc_hook,UC_HOOK_MEM_WRITE, hook_sex, NULL, (uintptr_t)Data, (uintptr_t)Data+0x20);
+		//uc_hook_add(uc,&uc_hook,UC_HOOK_CODE, hook_code, NULL, 1, 0);
+		// DEBUGGING
+
+		uc_err status = StartEmulation(uc);
+		if (status == UC_ERR_EXCEPTION)
+		{
+			// What we expect!
+			char newData[0x1000];
+			uc_mem_read(uc, EMULATION_DECRYPTION_BASE_DATA_ADDRESS, newData, 0x1000);
+			memcpy(Data, newData, 0x1000); // Copy the decrypted data back to the original location
+		}
+		else
+		{
+			throw std::runtime_error("Emulation failed with error: " + std::string(uc_strerror(status)));
+		}
+	}
+}
+
+
+
+
+
+/*
+int main()
+{
+    //TestDecrypt();
+    //DecryptPageTest();
+    DecryptAllPages();
+
+    getchar();
+}
+*/
+

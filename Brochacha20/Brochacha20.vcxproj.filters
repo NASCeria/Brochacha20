@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Entry">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Hyperion">
+      <UniqueIdentifier>{50ed38d2-756a-4312-9c7a-19e6e60b9486}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc">
+      <UniqueIdentifier>{d7381f99-a573-4a99-bcea-6ed17f6756a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PEFile">
+      <UniqueIdentifier>{d6be2b17-bc9b-4d56-8f8e-3dd04a0e09f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Zydis">
+      <UniqueIdentifier>{2b49c2d0-1ece-499f-b004-36f193e74e79}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CLI11">
+      <UniqueIdentifier>{1aab4b48-ad27-4372-b8a9-d8c4eef126fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Logging">
+      <UniqueIdentifier>{f6b2af1b-445d-48bf-bf40-4a38c0654e4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PEDump">
+      <UniqueIdentifier>{d2c1f820-ee4f-44d5-b3be-8bd84a1e536e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Entry.cpp">
+      <Filter>Entry</Filter>
+    </ClCompile>
+    <ClCompile Include="Zydis\Zydis.c">
+      <Filter>Zydis</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DemoCrypt.hpp">
+      <Filter>Hyperion</Filter>
+    </ClInclude>
+    <ClInclude Include="defs.h">
+      <Filter>Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="PEFile.hpp">
+      <Filter>PEFile</Filter>
+    </ClInclude>
+    <ClInclude Include="EffectivePatternScanner.hpp">
+      <Filter>PEFile</Filter>
+    </ClInclude>
+    <ClInclude Include="Zydis\Zydis.h">
+      <Filter>Zydis</Filter>
+    </ClInclude>
+    <ClInclude Include="PageDecryptionCore.hpp">
+      <Filter>Hyperion</Filter>
+    </ClInclude>
+    <ClInclude Include="Emulation.hpp">
+      <Filter>PEFile</Filter>
+    </ClInclude>
+    <ClInclude Include="PEDecryptor.hpp">
+      <Filter>Hyperion</Filter>
+    </ClInclude>
+    <ClInclude Include="CLI11.hpp">
+      <Filter>CLI11</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.hpp">
+      <Filter>Logging</Filter>
+    </ClInclude>
+    <ClInclude Include="PEDumper.hpp">
+      <Filter>PEDump</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
