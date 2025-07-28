@@ -23,7 +23,7 @@ WHEN It's very important and you REALLY need it to work you can also contact me 
 3. Get a compiled version of the UnicornEmu library
 4. Place the .lib into Brochacha20\libs\unicorn\lib\unicorn.lib
 5. Build as Release/Debug using Visual Studio
-6. Enjoy
+6. Enjoy :3
 
 # How Does it Work?
 
