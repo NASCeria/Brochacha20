@@ -160,7 +160,7 @@ namespace PageDecryptorCore
 						inst = Zydis::Disassmemble(inst.offset + inst.inst.length);
 						if (inst.inst.mnemonic == ZYDIS_MNEMONIC_NOT && inst.operands[0].type == ZYDIS_OPERAND_TYPE_REGISTER)
 						{
-							Logger::Debug("Found OffsetKey1 Degister on %p", inst.offset);
+							Logger::Debug("Found OffsetKey1 Register on %p", inst.offset);
 							Result.OffsetKey1 = possibleOffsetKey1;
 							break;
 						}
@@ -175,6 +175,7 @@ namespace PageDecryptorCore
 			}
 
 			
+			// TODO: CLEAN TS
 			Logger::Debug("[Dumped Registers Start]");
 			Logger::Debug("DecryptionKey1: %s", ZydisRegisterGetString((ZydisRegister)Result.DecryptionKey1));
 			Logger::Debug("DecryptionKey2: %s", ZydisRegisterGetString((ZydisRegister)Result.DecryptionKey2));
