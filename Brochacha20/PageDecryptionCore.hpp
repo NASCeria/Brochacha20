@@ -17,6 +17,9 @@ namespace PageDecryptorCore
 	// When first 2 bytes match RBP then the last 2 bytes are the displacement
 	// Register: DumpedRegister & 0xFFFF
 	// Displacement: DumpedRegister >> 16
+	
+	// TODO: Reduce PageRVA2 and Data2 to be in a Single value. We can seperate them into 2 bytes and a DWORD is 4 bytes.
+	// When upper 2 bytes of PageRVA are filled its going to be the stakc displacement. the other half will be the normal register that used to be stored in PageRVA
 	struct DumpedRegisters
 	{
 		DWORD PageRVA;
@@ -24,6 +27,7 @@ namespace PageDecryptorCore
 		DWORD DecryptionKey1;
 		DWORD DecryptionKey2;
 		DWORD Data;
+		DWORD Data2;	// STACk ENTRy!
 		DWORD OffsetKey1;
 		DWORD OffsetKey2;
 	};
@@ -101,7 +105,7 @@ namespace PageDecryptorCore
 			{
 				// Stack!
 				Result.PageRVA = (pageRetrieve.operands[1].mem.disp.value << 16) | ZYDIS_REGISTER_RBP;
-				Result.PageRVA2 = inst.operands[1].mem.base;
+				Result.PageRVA2 = pageRetrieve.operands[0].reg.value;
 			}
 			else
 			{
@@ -117,12 +121,18 @@ namespace PageDecryptorCore
 			Result.DecryptionKey1 = StoreDecryptionKey1Inst.operands[0].reg.value;
 			Result.DecryptionKey2 = StoreDecryptionKey2Inst.operands[0].reg.value;
 
-			inst = Zydis::Disassmemble(StartRange);
+			// fuckass var name..
+			uintptr_t clonedPageRVAAND = Scanner::RScanPattern(StartRange, StartRange - 0x100, "00 F0 FF FF", 1).back() - 3;
+
+			inst = Zydis::Disassmemble(clonedPageRVAAND);
+			Result.Data = inst.operands[0].reg.value;
+			Logger::Debug("Found Data2 Register on %p", inst.offset);
 			while (true)
 			{
-				if (inst.inst.mnemonic == ZYDIS_MNEMONIC_LEA && inst.operands[1].type == ZYDIS_OPERAND_TYPE_MEMORY && inst.operands[1].mem.disp.value == 0x10)
+				if (inst.inst.mnemonic == ZYDIS_MNEMONIC_MOV && inst.operands[0].type == ZYDIS_OPERAND_TYPE_MEMORY && inst.operands[1].reg.value == Result.Data)
 				{
-					Result.Data = inst.operands[1].mem.base;
+					Logger::Debug("Found Data2 Register on %p", inst.offset);
+					Result.Data2 = (inst.operands[0].mem.disp.value << 16) | ZYDIS_REGISTER_RBP;
 					break;
 				}
 				inst = Zydis::Disassmemble(inst.offset + inst.inst.length);
@@ -150,6 +160,7 @@ namespace PageDecryptorCore
 						inst = Zydis::Disassmemble(inst.offset + inst.inst.length);
 						if (inst.inst.mnemonic == ZYDIS_MNEMONIC_NOT && inst.operands[0].type == ZYDIS_OPERAND_TYPE_REGISTER)
 						{
+							Logger::Debug("Found OffsetKey1 Degister on %p", inst.offset);
 							Result.OffsetKey1 = possibleOffsetKey1;
 							break;
 						}
@@ -169,7 +180,10 @@ namespace PageDecryptorCore
 			Logger::Debug("DecryptionKey2: %s", ZydisRegisterGetString((ZydisRegister)Result.DecryptionKey2));
 			Logger::Debug("OffsetKey1: %s", ZydisRegisterGetString((ZydisRegister)Result.OffsetKey1));
 			Logger::Debug("PageRVA: %s", ZydisRegisterGetString((ZydisRegister)(Result.PageRVA & 0xFFFF)));
+			Logger::Debug("PageRVA: Disp: +%x",Result.PageRVA >> 16);
+			Logger::Debug("PageRVA2: %s", ZydisRegisterGetString((ZydisRegister)(Result.PageRVA2)));
 			Logger::Debug("Data: %s", ZydisRegisterGetString((ZydisRegister)(Result.Data)));
+			Logger::Debug("Data2: Disp +%x", (Result.Data2 >> 16));
 			Logger::Debug("[Dumped Registers End]");
 
 		}
@@ -224,7 +238,15 @@ namespace PageDecryptorCore
 
 		uc_context_reg_write(context, Emulation::ZydisReg2Uc((ZydisRegister_)Registers->DecryptionKey1), &PageState->DecryptionKey1);
 		uc_context_reg_write(context, Emulation::ZydisReg2Uc((ZydisRegister_)Registers->DecryptionKey2), &PageState->DecryptionKey2);
+
+		uint16_t disp = Registers->Data2 >> 16; // Extract the displacement
+
+		uintptr_t rbp;
+		uc_context_reg_read(context, Emulation::ZydisReg2Uc(ZYDIS_REGISTER_RBP), &rbp);
+		uc_mem_write(uc, rbp + disp, &EMULATION_DECRYPTION_BASE_DATA_ADDRESS, 8);
+
 		uc_context_reg_write(context, Emulation::ZydisReg2Uc((ZydisRegister_)Registers->Data), &EMULATION_DECRYPTION_BASE_DATA_ADDRESS);
+
 		if ((Registers->PageRVA & 0x0000FFFF) == ZYDIS_REGISTER_RBP)
 		{
 			uint16_t disp = Registers->PageRVA >> 16; // Extract the displacement
@@ -328,6 +350,13 @@ namespace PageDecryptorCore
 		}
 	}
 
+	void hook_code(uc_engine* uc,uint64_t addy,uint32_t,void* user_data)
+	{
+		Logger::Debug("%p: %s", addy, Zydis::FormatInstruction(Zydis::Disassmemble(addy)).c_str());
+		Emulation::PrintCpuContext(uc);
+		system("pause"); // singlestep
+	}
+
 	// We expect a already initialized uc_engine and a valid DumpedRegisters
 	void StartDecryptionEmulation(uc_engine* uc, DumpedRegisters* Registers, PageDecryptionState* PageState)
 	{
@@ -345,6 +374,9 @@ namespace PageDecryptorCore
 		// Debugging
 		//uc_hook mem_hook;
 		//uc_hook_add(uc, &mem_hook, UC_HOOK_MEM_READ | UC_HOOK_MEM_WRITE, hook_mem, (void*)"MEOW", EMULATION_DECRYPTION_BASE_DATA_ADDRESS, EMULATION_DECRYPTION_BASE_DATA_ADDRESS + 0x1000);
+
+		uc_hook code_hook;
+		//uc_hook_add(uc, &code_hook, UC_HOOK_CODE, &hook_code, 0, 1, 0);
 
 		uintptr_t RIP;
 		uc_reg_read(uc, UC_X86_REG_RIP, &RIP);

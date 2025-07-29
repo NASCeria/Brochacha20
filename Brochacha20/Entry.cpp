@@ -13,6 +13,7 @@
 #include "PEDecryptor.hpp"
 #include "PEDumper.hpp"
 
+#define BROCHACHA_VERSION "v1.2"
 
 int main(int argc, char** argv)
 {
@@ -33,7 +34,7 @@ int main(int argc, char** argv)
 	Logger::disableLogging = silentMode;
 	if (outputDir.empty()) outputDir = targetDir + "\\RobloxPlayerBeta.bin";
 
-	Logger::Log("Brochacha20 1.0 - nasec");
+	Logger::Log("Brochacha20 %s - nasec", BROCHACHA_VERSION);
 	Logger::Log("Decrypted Client will be saved to %s",outputDir.c_str());
 	Logger::Log("Decryption started..");
 

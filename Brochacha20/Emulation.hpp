@@ -107,7 +107,7 @@ namespace Emulation
 		case ZYDIS_REGISTER_XMM30: return UC_X86_REG_XMM30;
 		case ZYDIS_REGISTER_XMM31: return UC_X86_REG_XMM31;
 		default:
-			throw std::runtime_error("Unsupported register");
+			throw std::runtime_error(std::string("Unsupported register in ZydisReg2Uc: ") + (ZydisRegisterGetString(reg) ? ZydisRegisterGetString(reg) : "NULL" ));
 		}
 	}
 
@@ -206,10 +206,11 @@ namespace Emulation
 	{
 		__try
 		{
-			*(char*)addy;
+			char buff;
+			*(char*)&buff = *(char*)addy;
 			return true;
 		}
-		__except (EXCEPTION_CONTINUE_EXECUTION)
+		__except (EXCEPTION_EXECUTE_HANDLER)
 		{
 			return false;
 		}
@@ -228,7 +229,7 @@ namespace Emulation
 		bool legalRead = ProbeForRead((void*)address);
 
 
-		if (legalRead)
+		if (legalRead && type == UC_MEM_READ_UNMAPPED)
 		{
 			uint64_t page_start = address & ~0xFFF;
 			uc_mem_map(uc, page_start, 0x1000, UC_PROT_READ | UC_PROT_WRITE);
