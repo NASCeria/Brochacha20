@@ -38,8 +38,9 @@ namespace PEDumper
 
 		// Map Headers(like PE Header)
 		memcpy(RebuiltImage, DOS_HEADER, NT_HEADERS->OptionalHeader.SizeOfHeaders);
-
-		((IMAGE_NT_HEADERS*)(RebuiltImage + DOS_HEADER->e_lfanew))->OptionalHeader.ImageBase = 0x140000000;
+		
+		// TEMPORARY DISABLE "REBASING" DUE TO RTTI FAILING
+		//((IMAGE_NT_HEADERS*)(RebuiltImage + DOS_HEADER->e_lfanew))->OptionalHeader.ImageBase = 0x140000000;
 
 		// Map Sections
 		IMAGE_SECTION_HEADER* section = IMAGE_FIRST_SECTION(NT_HEADERS);
