@@ -1,7 +1,7 @@
 # Brochacha20
 A fully static Roblox Client Decryptor
 
-<img width="1276" height="277" alt="image" src="https://github.com/user-attachments/assets/08157872-79f6-4e89-aaab-6be0ecfe9e6c" />
+<img width="985" height="265" alt="image" src="https://github.com/user-attachments/assets/b459bb6b-cde6-462f-aa7e-a49b7c6efc92" />
 
 # How to Use
 1. Download newest Build from Release Tab
@@ -28,7 +28,7 @@ WHEN It's very important and you REALLY need it to work you can also contact me 
 # How Does it Work?
 
 ```
-Brief Explanation about Hyperion's Runtime Page decryption
+Brief Explanation about Hyperion's Runtime Page decryption (FULLY ANALYZED BY NASEC)
 
 Offsets:
 
