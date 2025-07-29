@@ -126,7 +126,7 @@ namespace PageDecryptorCore
 
 			inst = Zydis::Disassmemble(clonedPageRVAAND);
 			Result.Data = inst.operands[0].reg.value;
-			Logger::Debug("Found Data2 Register on %p", inst.offset);
+			Logger::Debug("Found Data1 Register on %p", inst.offset);
 			while (true)
 			{
 				if (inst.inst.mnemonic == ZYDIS_MNEMONIC_MOV && inst.operands[0].type == ZYDIS_OPERAND_TYPE_MEMORY && inst.operands[1].reg.value == Result.Data)
