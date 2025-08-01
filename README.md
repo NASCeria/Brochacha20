@@ -6,7 +6,7 @@ A fully static Roblox Client Decryptor
 # How to Use
 1. Download newest Build from Release Tab (I recommend downloading the UPX Packed version cuz its way smaller)
 2. Run the Brochacha20.exe with your Roblox Directory as an argument (Example: Brochacha20.exe C:\Roblox\Versions\version-9bf2d7ce6a0345d5)
-3. [OPTIONAL] Set output directory via -o (Example: Brochacha20.exe C:\Roblox\Dumps\RobloxDump.bin)
+3. [OPTIONAL] Set output file via -o (Example: Brochacha20.exe C:\Roblox\Dumps\RobloxDump.bin)
 4. Enjoy ^^
 
 # Options
