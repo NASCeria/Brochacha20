@@ -1,6 +1,6 @@
 # Brochacha20
 A fully static Roblox Client Decryptor
-![](https://komarev.com/ghpvc/?username=meowmeowmeowss&label=ball counter)
+![](https://komarev.com/ghpvc/?username=meowmeowmeowss&label=ball+counter)
 
 <img width="985" height="265" alt="image" src="https://github.com/user-attachments/assets/b459bb6b-cde6-462f-aa7e-a49b7c6efc92" />
 
