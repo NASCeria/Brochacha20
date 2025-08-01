@@ -67,7 +67,7 @@ NOffsetKey = ~OffsetKey
 
 All that above me is what Roblox internally does to compute the OffsetKey.
 At the end the OffsetKey is just PageRVA shifted by 32 bits.
-(I've got a theory that it is just for changing the key in runtime. Theres a counter for everytime the page gets encrypted/decrypted and i guess that the offset key depends on it. and due to us only decrypting it once, it will always be the default value ^^)
+(I got a theory that it is just for changing the key in runtime. Theres a counter for everytime the page gets encrypted/decrypted and i guess that the offset key depends on it. and due to us only decrypting it once, it will always be the default value ^^)
 
 Decryption:
 
