@@ -2,6 +2,10 @@
 A fully static Roblox Client Decryptor                                               
 ![](https://komarev.com/ghpvc/?username=meowmeowmeowss&label=ball+counter)
 
+# WARNING IT DOESNT WORK ON THE NEWEST VERSION
+I'm currently not home and have no way to fix it because only my phone is available to me.
+I will be home next week on Tuesday(12th of August)
+
 <img width="985" height="265" alt="image" src="https://github.com/user-attachments/assets/b459bb6b-cde6-462f-aa7e-a49b7c6efc92" />
 
 # How to Use
