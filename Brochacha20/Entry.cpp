@@ -13,7 +13,7 @@
 #include "PEDecryptor.hpp"
 #include "PEDumper.hpp"
 
-#define BROCHACHA_VERSION "v1.2"
+#define BROCHACHA_VERSION "v1.3"
 
 int main(int argc, char** argv)
 {

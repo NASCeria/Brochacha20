@@ -112,8 +112,9 @@ PEFile* DecryptRBXClient(const std::string RobloxPath)
 	for (uint64_t pageRVA = textSectionStartRVA; pageRVA < textSectionEndRVA; pageRVA += 0x1000)
 	{
 		// TODO: add percentage prints
-		//Logger::Debug("Current Page: %p", pageRVA);
-
+#ifdef _DEBUG
+		Logger::Debug("Current Page: %p : %p", pageRVA, (char*)Client->GetBase() + pageRVA);
+#endif
 		__uint128 DecryptionKeys[2];
 		PageDecryptorCore::Calculations::GetDecryptionKeys(PageDecryptorCore::Calculations::GetPageId(pageRVA), DecryptionKeyArrayAddy, DecryptionKeys);
 

@@ -271,7 +271,8 @@ namespace PageDecryptorCore
 
 
 		auto xmm7 = _mm_set_epi64x(0xffffffffffffffff, 0xffffffffffffffff);
-		uc_reg_write(uc, UC_X86_REG_XMM7, &xmm7);
+		uc_context_reg_write(context, UC_X86_REG_XMM7, &xmm7);
+
 
 		return context;
 	}
@@ -286,6 +287,10 @@ namespace PageDecryptorCore
 	{
 		uc_context* context = BuildContext(uc, Registers, PageState);
 		uc_context_restore(uc, context);
+
+#ifdef _DEBUG
+		Emulation::PrintCpuContext(uc);
+#endif
 
 		DWORD useless;
 		VirtualProtect((LPVOID)PageState->Data, 0x1000, PAGE_READWRITE, &useless); // When loading the client the memory is set to NO_ACCESS
@@ -338,7 +343,7 @@ namespace PageDecryptorCore
 		//MapDecryptionPrologue(*uc, decryptionRange.first, decryptionRange.second);
 	}
 
-	// tell me one developer from this com that can work on his own without any help or sources or blogs btw
+	// [edgy egoistic comment here]
 
 	void hook_mem(uc_engine* uc, uc_mem_type type, uint64_t address, int size, int64_t value, void* user_data) {
 		if (type == UC_MEM_WRITE) {
@@ -376,8 +381,10 @@ namespace PageDecryptorCore
 		//uc_hook mem_hook;
 		//uc_hook_add(uc, &mem_hook, UC_HOOK_MEM_READ | UC_HOOK_MEM_WRITE, hook_mem, (void*)"MEOW", EMULATION_DECRYPTION_BASE_DATA_ADDRESS, EMULATION_DECRYPTION_BASE_DATA_ADDRESS + 0x1000);
 
+		/*
 		uc_hook code_hook;
-		//uc_hook_add(uc, &code_hook, UC_HOOK_CODE, &hook_code, 0, 1, 0);
+		uc_hook_add(uc, &code_hook, UC_HOOK_CODE, &hook_code, 0, 1, 0);
+		*/
 
 		uintptr_t RIP;
 		uc_reg_read(uc, UC_X86_REG_RIP, &RIP);
