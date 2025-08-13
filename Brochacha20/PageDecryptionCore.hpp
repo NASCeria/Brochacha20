@@ -138,11 +138,23 @@ namespace PageDecryptorCore
 				inst = Zydis::Disassmemble(inst.offset + inst.inst.length);
 			}
 
-			// TOOD: maybe scan until startrange and when its not found then it MUST be after   shr ??, 0C; ?? ??, 7FFFh; shl ??, 2Ch
-			auto pageOffsetCalcRes = Scanner::ScanPattern(StartRange - 0x200, StartRange + 0x100, "C1 ?? 0C ?? ?? FF 7F 00 00 48 C1 ?? 2C",1);
+			// TODO: maybe scan until startrange and when its not found then it MUST be after   shr ??, 0C; ?? ??, 7FFFh; shl ??, 2Ch
+			// TODO2: WE NEED TO IMPROVE THIS! Dont relay on pattern scanning we need to match the instructiuons BUT the problem is that we cant
+			// walk the instructions backwards.. OR CAN WE??
+			auto pageOffsetCalcRes = Scanner::ScanPattern(StartRange - 0x200, StartRange + 0x100, "C1 ?? 0C ?? ?? FF 7F 00 00 ?? C1 ?? 2C",1);
 			if (pageOffsetCalcRes.empty())
 			{
-				pageOffsetCalcRes = Scanner::ScanPattern(StartRange - 0x200, StartRange + 0x100, "C1 ?? 0C ?? FF 7F 00 00 48 C1 ?? 2C", 1);
+				pageOffsetCalcRes = Scanner::ScanPattern(StartRange - 0x200, StartRange + 0x100, "C1 ?? 0C ?? FF 7F 00 00 ?? C1 ?? 2C", 1);
+
+				if (pageOffsetCalcRes.empty())
+				{
+					pageOffsetCalcRes = Scanner::ScanPattern(StartRange - 0x200, StartRange + 0x100, "C1 ?? 0C ?? ?? ?? FF 7F 00 00 ?? C1 ?? 2C", 1);
+
+					if (pageOffsetCalcRes.empty())
+					{
+						throw std::runtime_error("pageOffsetCalc Pattern Broke..");
+					}
+				}
 			}
 
 			uintptr_t pageOffsetCalc = pageOffsetCalcRes.back();
@@ -342,7 +354,7 @@ namespace PageDecryptorCore
 
 		//MapDecryptionPrologue(*uc, decryptionRange.first, decryptionRange.second);
 	}
-
+	
 	// [edgy egoistic comment here]
 
 	void hook_mem(uc_engine* uc, uc_mem_type type, uint64_t address, int size, int64_t value, void* user_data) {
