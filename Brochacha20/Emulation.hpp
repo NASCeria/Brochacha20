@@ -1,10 +1,11 @@
 // Little wrapper ^^ 
-
+#pragma once
 
 #include <iostream>
 
 #include <unicorn/unicorn.h>
 #include "Zydis/Zydis.h"
+#include "Logger.hpp"
 
 // Helper functions
 namespace Zydis
@@ -16,7 +17,7 @@ namespace Zydis
 		uintptr_t offset;
 	};
 
-	ZydisDecodedFullInstruction Disassmemble(uintptr_t addy)
+	static ZydisDecodedFullInstruction Disassemble(uintptr_t addy)
 	{
 		ZydisDecoder decoder;
 		ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_STACK_WIDTH_64);
@@ -27,7 +28,7 @@ namespace Zydis
 		return instruction;
 	}
 
-	std::string FormatInstruction(ZydisDecodedFullInstruction instruction)
+	static std::string FormatInstruction(ZydisDecodedFullInstruction instruction)
 	{
 		char buffer[256];
 		ZydisFormatter formatter;
@@ -54,7 +55,7 @@ namespace Zydis
 
 namespace Emulation
 {
-	uc_x86_reg ZydisReg2Uc(ZydisRegister_ reg)
+	static uc_x86_reg ZydisReg2Uc(ZydisRegister_ reg)
 	{
 		switch (reg)
 		{
@@ -111,7 +112,7 @@ namespace Emulation
 		}
 	}
 
-	void Test()
+	static void Test()
 	{
 		uc_engine* uc;
 		uc_open(UC_ARCH_ARM64, UC_MODE_64, &uc);
@@ -123,7 +124,7 @@ namespace Emulation
 
 	}
 
-	void PrintCpuContext(uc_engine* uc)
+	static void PrintCpuContext(uc_engine* uc)
 	{
 		std::vector<std::pair<std::string, uc_x86_reg>> regs = {
 			{"RAX", UC_X86_REG_RAX},
@@ -171,7 +172,7 @@ namespace Emulation
 		}
 	}
 
-	void ClearEssentialRegisters(uc_context* context)
+	static void ClearEssentialRegisters(uc_context* context)
 	{
 		uint64_t zero = 0;
 		uc_context_reg_write(context, UC_X86_REG_RAX, &zero);
@@ -188,7 +189,7 @@ namespace Emulation
 
 	}
 
-	void StartEmulation(uc_engine* uc, uint64_t start_address, uint64_t end_address, uint64_t timeout = 0)
+	static void StartEmulation(uc_engine* uc, uint64_t start_address, uint64_t end_address, uint64_t timeout = 0)
 	{
 		uc_err err = uc_emu_start(uc, start_address, end_address, timeout, 0);
 		if (err != UC_ERR_OK)
@@ -197,12 +198,12 @@ namespace Emulation
 		}
 	}
 
-	void StopEmulation(uc_engine* uc)
+	static void StopEmulation(uc_engine* uc)
 	{
 		uc_emu_stop(uc);
 	}
 
-	bool ProbeForRead(void* addy)
+	static bool ProbeForRead(void* addy)
 	{
 		__try
 		{
@@ -238,14 +239,14 @@ namespace Emulation
 		}
 
 		Logger::Error("ACCESS VIOLATION AT %p TRYING TO %s %p", RIP, type == UC_MEM_WRITE_UNMAPPED ? "WRITE" : type == UC_MEM_READ_UNMAPPED ? "READ" : "FETCH", address);
-		Logger::Error("%s", Zydis::FormatInstruction(Zydis::Disassmemble((uintptr_t)insts)).c_str());
+		Logger::Error("%s", Zydis::FormatInstruction(Zydis::Disassemble((uintptr_t)insts)).c_str());
 		uc_emu_stop(uc);
 
 
 		return false;
 	}
 
-	uc_engine* SetupEmulation()
+	static uc_engine* SetupEmulation()
 	{
 		const uint64_t STACK_SIZE = 0x10000; // 64kb
 		const uint64_t STACK_BASE = 0x200000;
@@ -263,7 +264,7 @@ namespace Emulation
 		return uc;
 	}
 
-	uc_err StepEmulation(uc_engine* uc)
+	static uc_err StepEmulation(uc_engine* uc)
 	{
 		uint64_t rip;
 		uc_reg_read(uc, UC_X86_REG_RIP, &rip);

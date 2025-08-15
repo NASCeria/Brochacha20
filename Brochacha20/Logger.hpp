@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <string>
 #include <cstdarg>
@@ -8,7 +10,7 @@ namespace Logger
 	static bool disableLogging = false;
 
 	// AI
-	void EnableANSIColors() 
+	static void EnableANSIColors() 
 	{
 		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 		if (hOut == INVALID_HANDLE_VALUE) return;
@@ -21,14 +23,14 @@ namespace Logger
 	}
 
     // AI
-    void PrintTimestamp() {
+    static void PrintTimestamp() {
         time_t now = time(nullptr);
         tm* local = localtime(&now);
 
         printf("\033[90m%02d:%02d:%02d\033[0m ", local->tm_hour, local->tm_min, local->tm_sec);
     }
 
-    void Log(const char* fmt, ...) {
+    static void Log(const char* fmt, ...) {
         if (disableLogging) return;
 
         PrintTimestamp();
@@ -42,7 +44,7 @@ namespace Logger
         printf("\n");
     }
 
-    void Error(const char* fmt, ...) {
+    static void Error(const char* fmt, ...) {
         if (disableLogging) return;
 
         PrintTimestamp();
@@ -56,7 +58,7 @@ namespace Logger
         printf("\n");
     }
 
-    void Success(const char* fmt, ...) {
+    static void Success(const char* fmt, ...) {
         if (disableLogging) return;
 
         PrintTimestamp();
@@ -70,7 +72,7 @@ namespace Logger
         printf("\n");
     }
 
-    void Debug(const char* fmt, ...) {
+    static void Debug(const char* fmt, ...) {
         if (disableLogging) return;
 
         PrintTimestamp();

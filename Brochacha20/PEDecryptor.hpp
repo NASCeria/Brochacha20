@@ -3,6 +3,7 @@
 #pragma once
 #include "PEFile.hpp"
 #include "PageDecryptionCore.hpp"
+#include "JCCResolverPatcher.hpp"
 
 // Demo func
 void DecryptPage(uint32_t PageRVA)
@@ -136,6 +137,8 @@ PEFile* DecryptRBXClient(const std::string RobloxPath)
 			return nullptr;
 		}
 	}
+
+	ResolveAndPatchInt3Stubs(Loader, Client);
 
 	delete Loader;
 

@@ -34,6 +34,9 @@
     <ClCompile Include="Zydis\Zydis.c">
       <Filter>Zydis</Filter>
     </ClCompile>
+    <ClCompile Include="JCCResolverPatcher.hpp">
+      <Filter>Hyperion</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DemoCrypt.hpp">
@@ -68,6 +71,9 @@
     </ClInclude>
     <ClInclude Include="PEDumper.hpp">
       <Filter>PEDump</Filter>
+    </ClInclude>
+    <ClInclude Include="JCCResolverCore.hpp">
+      <Filter>Hyperion</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

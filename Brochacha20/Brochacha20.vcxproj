@@ -136,10 +136,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Entry.cpp" />
+    <ClCompile Include="JCCResolverPatcher.hpp" />
     <ClCompile Include="Zydis\Zydis.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CLI11.hpp" />
+    <ClInclude Include="JCCResolverCore.hpp" />
     <ClInclude Include="Logger.hpp" />
     <ClInclude Include="PEDecryptor.hpp" />
     <ClInclude Include="defs.h" />

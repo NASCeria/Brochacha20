@@ -11,9 +11,8 @@
 #include "Logger.hpp"
 #include "DemoCrypt.hpp"
 #include "PEDecryptor.hpp"
-#include "PEDumper.hpp"
 
-#define BROCHACHA_VERSION "v1.3"
+#define BROCHACHA_VERSION "v1.3.1"
 
 int main(int argc, char** argv)
 {

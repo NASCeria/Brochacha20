@@ -93,10 +93,10 @@ namespace PageDecryptorCore
 		// yoru likes to lick savage's puppy furry feet btw
 		void DumpRegisters(uintptr_t StartRange, uintptr_t DecryptionKeyOffsetInst, DumpedRegisters& Result)
 		{
-			Zydis::ZydisDecodedFullInstruction inst = Zydis::Disassmemble(StartRange);
+			Zydis::ZydisDecodedFullInstruction inst = Zydis::Disassemble(StartRange);
 
 			// We expect the PageRetrieve to be mov PageRVA, [RBP + Displacement] OR A Random ass Instruction!
-			auto pageRetrieve = Zydis::Disassmemble(StartRange - 7); // we need to check if hyperion has a register dedicated to the page or it is on the stack
+			auto pageRetrieve = Zydis::Disassemble(StartRange - 7); // we need to check if hyperion has a register dedicated to the page or it is on the stack
 
 			//std::cout << std::hex << pageRetrieve.offset << " " << Zydis::FormatInstruction(pageRetrieve) << std::endl;
 
@@ -114,9 +114,9 @@ namespace PageDecryptorCore
 
 			// DecryptionKey1 and DecryptionKey2
 
-			auto DecryptionKeyOffsetInstDis = Zydis::Disassmemble(DecryptionKeyOffsetInst);
-			auto StoreDecryptionKey1Inst = Zydis::Disassmemble(DecryptionKeyOffsetInstDis.offset + DecryptionKeyOffsetInstDis.inst.length);
-			auto StoreDecryptionKey2Inst = Zydis::Disassmemble(StoreDecryptionKey1Inst.offset + StoreDecryptionKey1Inst.inst.length);
+			auto DecryptionKeyOffsetInstDis = Zydis::Disassemble(DecryptionKeyOffsetInst);
+			auto StoreDecryptionKey1Inst = Zydis::Disassemble(DecryptionKeyOffsetInstDis.offset + DecryptionKeyOffsetInstDis.inst.length);
+			auto StoreDecryptionKey2Inst = Zydis::Disassemble(StoreDecryptionKey1Inst.offset + StoreDecryptionKey1Inst.inst.length);
 
 			Result.DecryptionKey1 = StoreDecryptionKey1Inst.operands[0].reg.value;
 			Result.DecryptionKey2 = StoreDecryptionKey2Inst.operands[0].reg.value;
@@ -124,7 +124,7 @@ namespace PageDecryptorCore
 			// fuckass var name..
 			uintptr_t clonedPageRVAAND = Scanner::RScanPattern(StartRange, StartRange - 0x100, "00 F0 FF FF", 1).back() - 3;
 
-			inst = Zydis::Disassmemble(clonedPageRVAAND);
+			inst = Zydis::Disassemble(clonedPageRVAAND);
 			Result.Data = inst.operands[0].reg.value;
 			Logger::Debug("Found Data1 Register on %p", inst.offset);
 			while (true)
@@ -135,7 +135,7 @@ namespace PageDecryptorCore
 					Result.Data2 = (inst.operands[0].mem.disp.value << 16) | ZYDIS_REGISTER_RBP;
 					break;
 				}
-				inst = Zydis::Disassmemble(inst.offset + inst.inst.length);
+				inst = Zydis::Disassemble(inst.offset + inst.inst.length);
 			}
 
 			// TODO: maybe scan until startrange and when its not found then it MUST be after   shr ??, 0C; ?? ??, 7FFFh; shl ??, 2Ch
@@ -163,13 +163,13 @@ namespace PageDecryptorCore
 			if (pageOffsetCalc < StartRange)
 			{
 				// Before
-				inst = Zydis::Disassmemble(StartRange);
+				inst = Zydis::Disassemble(StartRange);
 				while (true)
 				{
 					if (inst.inst.mnemonic == ZYDIS_MNEMONIC_MOV && inst.operands[0].type == ZYDIS_OPERAND_TYPE_REGISTER && inst.operands[1].type == ZYDIS_OPERAND_TYPE_REGISTER)
 					{
 						uint8_t possibleOffsetKey1 = inst.operands[1].reg.value;
-						inst = Zydis::Disassmemble(inst.offset + inst.inst.length);
+						inst = Zydis::Disassemble(inst.offset + inst.inst.length);
 						if (inst.inst.mnemonic == ZYDIS_MNEMONIC_NOT && inst.operands[0].type == ZYDIS_OPERAND_TYPE_REGISTER)
 						{
 							Logger::Debug("Found OffsetKey1 Register on %p", inst.offset);
@@ -177,7 +177,7 @@ namespace PageDecryptorCore
 							break;
 						}
 					}
-					inst = Zydis::Disassmemble(inst.offset + inst.inst.length);
+					inst = Zydis::Disassemble(inst.offset + inst.inst.length);
 				}
 			}
 			else
@@ -207,10 +207,10 @@ namespace PageDecryptorCore
 		{
 			uintptr_t imulInst = Pe->ScanPattern(Start, "01 F8 3F 00", true, 1).back() - 3; // search for the 3FF801h operand which is used to calculate the decryption key offset
 
-			Zydis::ZydisDecodedFullInstruction inst = Zydis::Disassmemble(imulInst);
+			Zydis::ZydisDecodedFullInstruction inst = Zydis::Disassemble(imulInst);
 			while (true)
 			{
-				inst = Zydis::Disassmemble(inst.offset + inst.inst.length);
+				inst = Zydis::Disassemble(inst.offset + inst.inst.length);
 				if (inst.inst.mnemonic == ZYDIS_MNEMONIC_LEA && inst.operands[1].type == ZYDIS_OPERAND_TYPE_MEMORY && inst.operands[1].mem.base == ZYDIS_REGISTER_RIP)
 				{
 					return std::make_pair(inst.offset, inst.offset + inst.inst.length + inst.operands[1].mem.disp.value);
@@ -226,10 +226,10 @@ namespace PageDecryptorCore
 			uintptr_t pageSubInst = Pe->ScanPattern(s, "00 F0 FF FF", true, 1).back() - 3; // search for the -1000h
 
 
-			Zydis::ZydisDecodedFullInstruction inst = Zydis::Disassmemble(pageSubInst);
+			Zydis::ZydisDecodedFullInstruction inst = Zydis::Disassemble(pageSubInst);
 			while (true)
 			{
-				inst = Zydis::Disassmemble(inst.offset + inst.inst.length);
+				inst = Zydis::Disassemble(inst.offset + inst.inst.length);
 				if (inst.inst.mnemonic == ZYDIS_MNEMONIC_JMP)
 				{
 					return std::make_pair(pageSubInst, inst.offset + inst.operands[0].imm.value.u + inst.inst.length);
@@ -301,7 +301,7 @@ namespace PageDecryptorCore
 		uc_context_restore(uc, context);
 
 #ifdef _DEBUG
-		Emulation::PrintCpuContext(uc);
+		//Emulation::PrintCpuContext(uc);
 #endif
 
 		DWORD useless;
@@ -370,7 +370,7 @@ namespace PageDecryptorCore
 
 	void hook_code(uc_engine* uc,uint64_t addy,uint32_t,void* user_data)
 	{
-		Logger::Debug("%p: %s", addy, Zydis::FormatInstruction(Zydis::Disassmemble(addy)).c_str());
+		Logger::Debug("%p: %s", addy, Zydis::FormatInstruction(Zydis::Disassemble(addy)).c_str());
 		Emulation::PrintCpuContext(uc);
 		system("pause"); // singlestep
 	}
