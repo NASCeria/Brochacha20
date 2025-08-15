@@ -222,7 +222,19 @@ namespace PageDecryptorCore
 
 		std::pair<uintptr_t, uintptr_t> FetchEmulationRange(PEFile* Pe)
 		{
-			uintptr_t s = Pe->ScanSection(".byfron", "66 0F 6F ?? 66 0F 73 ?? 20 66 0F 6F ?? 66 0F 73 ?? 20 66 44 0F 6F ?? 66 41 0F 73 D0 20 66 44 0F 6F ?? 66 41 0F 73 D1 20")[0];
+			//uintptr_t s = Pe->ScanSection(".byfron", "66 0F 6F ?? 66 0F 73 ?? 20 66 0F 6F ?? 66 0F 73 ?? 20 66 44 0F 6F ?? 66 41 0F 73 D0 20 66 44 0F 6F ?? 66 41 0F 73 D1 20").back();
+			auto res = Pe->ScanSection(".byfron", "48 81 C1 00 F0 BF FF 48 81 F9 FF FF 1F 00");
+			if (res.empty())
+			{
+				res = Pe->ScanSection(".byfron", "66 0F 6F ?? 66 0F 73 ?? 20 66 0F 6F ?? 66 0F 73 ?? 20 66 44 0F 6F ?? 66 41 0F 73 D0 20 66 44 0F 6F ?? 66 41 0F 73 D1 20");
+
+				if (res.empty())
+				{
+					throw std::runtime_error("Failed to find emulation range start");
+				}
+			}
+
+			uintptr_t s = res.back();
 			uintptr_t pageSubInst = Pe->ScanPattern(s, "00 F0 FF FF", true, 1).back() - 3; // search for the -1000h
 
 

@@ -12,7 +12,7 @@
 #include "DemoCrypt.hpp"
 #include "PEDecryptor.hpp"
 
-#define BROCHACHA_VERSION "v1.3.1"
+#define BROCHACHA_VERSION "v1.4.1"
 
 int main(int argc, char** argv)
 {

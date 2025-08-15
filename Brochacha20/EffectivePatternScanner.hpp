@@ -10,7 +10,7 @@ namespace Scanner
 {
 	inline std::vector<uintptr_t> ScanAob(uintptr_t start, uintptr_t end, const char* aob, const char* mask, int endResults = -1)
 	{
-		std::vector<uintptr_t> results;
+		std::vector<uintptr_t> results = std::vector<uintptr_t>();
 
 		int aobSize = strlen(mask);
 
