@@ -7,6 +7,7 @@ I've noticed that this Decryptor breaks pretty frequent due to retrieving all th
 Theres a way better method to do this which requires rewriting most of the core...
 Soooo I don't really see a reason to continue fixing this version everytime it breaks when I could just switch the method!
 Only problem is that I'm very busy with other Projects and got little to no motivation to implement my new concept ^^
+I'm sorry..
 
 Manual dump: (i manually extracted all the required data)
 [version-7b14ca0aa83149fa](https://pixeldrain.com/u/2y9PBAje)
