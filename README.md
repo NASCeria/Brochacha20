@@ -2,6 +2,14 @@
 A fully static Roblox Client Decryptor                                               
 ![](https://komarev.com/ghpvc/?username=meowmeowmeowss&label=ball+counter)
 
+# IMPORTANT NOTE (FREQUENT BREAKING + "FUTURE PLANS")
+I've noticed that this Decryptor breaks pretty frequent due to retrieving all the data that needs to get extracted for my current Decryption method to work..
+Theres a way better method to do this which requires rewriting most of the core...
+Soooo I don't really see a reason to continue fixing this version everytime it breaks when I could just switch the method!
+Only problem is that I'm very busy with other Projects and got little to no motivation to implement my new concept ^^
+
+Manual dump: (i manually extracted all the required data)
+[version-7b14ca0aa83149fa](https://pixeldrain.com/u/2y9PBAje)
 
 <img width="985" height="265" alt="image" src="https://github.com/user-attachments/assets/b459bb6b-cde6-462f-aa7e-a49b7c6efc92" />
 
@@ -12,7 +20,7 @@ A fully static Roblox Client Decryptor
 4. Enjoy ^^
 
 # Options
--s,-silent   : No logging   
+-s,--silent   : No logging   
 -o,--output  : Decrypted output
 
 # Issues
