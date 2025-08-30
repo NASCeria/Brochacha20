@@ -37,7 +37,16 @@ int main(int argc, char** argv)
 	Logger::Log("Decrypted Client will be saved to %s",outputDir.c_str());
 	Logger::Log("Decryption started..");
 
-	PEFile* decryptedClient = DecryptRBXClient(targetDir);
+	PEFile* decryptedClient = 0;
+	try
+	{
+		decryptedClient = DecryptRBXClient(targetDir);
+	}
+	catch (const std::exception& ex)
+	{
+		Logger::Error("Fatal error while decrypting Roblox Client: %s",ex.what());
+	}
+
 	if (decryptedClient)
 	{
 		Logger::Success("Successfully decrypted Roblox Client!");
@@ -57,6 +66,7 @@ int main(int argc, char** argv)
 	else
 	{
 		Logger::Error("Failed to decrypt Roblox Client. Please report it ^^ discord: mrnasec");
+		system("pause");
 	}
 
 	return 0;

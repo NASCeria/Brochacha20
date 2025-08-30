@@ -91,6 +91,7 @@ namespace PageDecryptorCore
 	namespace Dumper
 	{
 		// yoru likes to lick savage's puppy furry feet btw
+		// ISSUE: DATA REGISTERS AND PAGERVA ARENT GETTING PROPERLY RETRIEVED
 		void DumpRegisters(uintptr_t StartRange, uintptr_t DecryptionKeyOffsetInst, DumpedRegisters& Result)
 		{
 			Zydis::ZydisDecodedFullInstruction inst = Zydis::Disassemble(StartRange);
@@ -121,6 +122,7 @@ namespace PageDecryptorCore
 			Result.DecryptionKey1 = StoreDecryptionKey1Inst.operands[0].reg.value;
 			Result.DecryptionKey2 = StoreDecryptionKey2Inst.operands[0].reg.value;
 
+			// TODO: issue here
 			// fuckass var name..
 			uintptr_t clonedPageRVAAND = Scanner::RScanPattern(StartRange, StartRange - 0x100, "00 F0 FF FF", 1).back() - 3;
 
@@ -223,19 +225,31 @@ namespace PageDecryptorCore
 		std::pair<uintptr_t, uintptr_t> FetchEmulationRange(PEFile* Pe)
 		{
 			//uintptr_t s = Pe->ScanSection(".byfron", "66 0F 6F ?? 66 0F 73 ?? 20 66 0F 6F ?? 66 0F 73 ?? 20 66 44 0F 6F ?? 66 41 0F 73 D0 20 66 44 0F 6F ?? 66 41 0F 73 D1 20").back();
-			auto res = Pe->ScanSection(".byfron", "48 81 C1 00 F0 BF FF 48 81 F9 FF FF 1F 00");
+			auto res = Pe->ScanSection(".byfron", "66 0F 6F ?? 66 0F 73 ?? 20 66 0F 6F ?? 66 0F 73 ?? 20 66 44 0F 6F ?? 66 41 0F 73 ?? 20 66 44 0F 6F ?? 66 41 0F 73 ?? 20");
 			if (res.empty())
 			{
-				res = Pe->ScanSection(".byfron", "66 0F 6F ?? 66 0F 73 ?? 20 66 0F 6F ?? 66 0F 73 ?? 20 66 44 0F 6F ?? 66 41 0F 73 D0 20 66 44 0F 6F ?? 66 41 0F 73 D1 20");
-
+				res = Pe->ScanSection(".byfron", "48 81 C1 00 F0 BF FF 48 81 F9 FF FF 1F 00");
 				if (res.empty())
 				{
-					throw std::runtime_error("Failed to find emulation range start");
+					throw std::runtime_error("Failed to find Decryption Start (Aob Invalid)");
 				}
 			}
 
+retry:
 			uintptr_t s = res.back();
-			uintptr_t pageSubInst = Pe->ScanPattern(s, "00 F0 FF FF", true, 1).back() - 3; // search for the -1000h
+			auto pageSubInsts = Scanner::RScanPattern(s, s - 0x100, "00 F0 FF FF", 1);
+
+			if (pageSubInsts.empty())
+			{
+				res.pop_back();
+				if (res.empty())
+				{
+					throw std::runtime_error("Failed to find Decryption prologue (Page Range Check Aob Broke)");
+				}
+				goto retry;
+			}
+
+			uintptr_t pageSubInst = pageSubInsts.back() - 3; // search for the -1000h
 
 
 			Zydis::ZydisDecodedFullInstruction inst = Zydis::Disassemble(pageSubInst);
