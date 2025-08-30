@@ -2,7 +2,7 @@
 A fully static Roblox Client Decryptor                                               
 ![](https://komarev.com/ghpvc/?username=meowmeowmeowss&label=ball+counter)
 
-# IMPORTANT NOTE (FREQUENT BREAKING + "FUTURE PLANS")
+# IMPORTANT NOTE (SEMI DISCONTINUED + FREQUENT BREAKING + "FUTURE PLANS")
 I've noticed that this Decryptor breaks pretty frequent due to retrieving all the data that needs to get extracted for my current Decryption method to work..
 Theres a way better method to do this which requires rewriting most of the core...
 Soooo I don't really see a reason to continue fixing this version everytime it breaks when I could just switch the method!
